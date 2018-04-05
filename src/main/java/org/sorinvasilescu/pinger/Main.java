@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.sorinvasilescu.pinger.service.HttpService;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -45,22 +46,35 @@ public class Main {
             }
         }
 
+        // log to file if filename are present in the config
         if (properties.containsKey("logPath")) {
             addFileLogger(properties.getProperty("logPath"));
+        }
+
+        // start web server if host and port are present in the config
+        if (properties.containsKey("host") && properties.containsKey("port")) {
+            addWebServer(properties);
         }
 
         return true;
     }
 
     private static void addFileLogger(String logPath) {
+        // get context and configs
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         final Configuration config = ctx.getConfiguration();
+        /*
+         * note: this might have been done by creating a different logger altogether
+         * but for our use case, I think this is simpler and sufficient
+         */
         final LoggerConfig rootConfig = config.getRootLogger();
 
+        // create layout
         Layout<? extends Serializable> layout = PatternLayout.newBuilder()
                             .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
                             .build();
 
+        // create appender
         Appender appender = FileAppender.newBuilder()
                 .withFileName(logPath)
                 .withAppend(true)
@@ -69,10 +83,18 @@ public class Main {
                 .build();
         appender.start();
 
+        // add appender to root logger config
         config.addAppender(appender);
         rootConfig.addAppender(appender, Level.WARN, null);
         ctx.updateLoggers();
 
         logger.info("Loggers configured");
+    }
+
+    private static void addWebServer(Properties properties) {
+        String host = properties.getProperty("host");
+        Integer port = Integer.valueOf(properties.getProperty("port"));
+        HttpService httpService = new HttpService(host,port);
+        httpService.run();
     }
 }
