@@ -39,14 +39,17 @@ public class HttpCheckService extends Thread {
         while (true) {
             try {
                 HttpResponse response = httpRequest(url, timeout);
-                Integer code = response.getStatusLine().getStatusCode();
+                Boolean success;
                 StringBuilder result = new StringBuilder();
-
-                for (Header header : response.getAllHeaders()) {
-                    result.append(header.toString());
+                if (response != null) {
+                    Integer code = response.getStatusLine().getStatusCode();
+                    for (Header header : response.getAllHeaders()) {
+                        result.append(header.toString());
+                    }
+                    success = isSuccessful(code, result.toString());
+                } else {
+                    success = false;
                 }
-
-                Boolean success = isSuccessful(code, result.toString());
                 Results.getInstance().setHttpResult(host, result.toString(), success);
                 logger.warn(result);
             } catch (Exception e) {
