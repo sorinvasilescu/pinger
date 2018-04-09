@@ -10,7 +10,9 @@ import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.sorinvasilescu.pinger.service.HttpService;
+import org.sorinvasilescu.pinger.service.HttpResultService;
+import org.sorinvasilescu.pinger.service.PingService;
+import org.sorinvasilescu.pinger.service.TracerouteService;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,7 +21,7 @@ import java.util.Properties;
 
 public class Main {
 
-    private static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
 
     public static void main(String[] args) {
         logger.info("Init started");
@@ -54,6 +56,11 @@ public class Main {
         // start web server if host and port are present in the config
         if (properties.containsKey("host") && properties.containsKey("port")) {
             addWebServer(properties);
+        }
+
+        // if there are hosts to be pinged
+        if (properties.containsKey("pingAndTraceHosts")) {
+            addPingAndTraceroute(properties);
         }
 
         return true;
@@ -94,7 +101,25 @@ public class Main {
     private static void addWebServer(Properties properties) {
         String host = properties.getProperty("host");
         Integer port = Integer.valueOf(properties.getProperty("port"));
-        HttpService httpService = new HttpService(host,port);
-        httpService.run();
+        HttpResultService httpResultService = new HttpResultService(host,port);
+        httpResultService.run();
+    }
+
+    private static void addPingAndTraceroute(Properties properties) {
+        String pingHosts = properties.getProperty("pingAndTraceHosts");
+        String[] hostList = pingHosts.split(",");
+        for (String host : hostList) {
+            logger.info("Adding ping service for " + host);
+            if (host.length() > 0) {
+                // add results for that hostname
+                Results.getInstance().addHostname(host);
+                // add ping service
+                PingService ping = new PingService(host);
+                ping.start();
+                // add traceroute service
+                TracerouteService tr = new TracerouteService(host);
+                tr.start();
+            }
+        }
     }
 }
