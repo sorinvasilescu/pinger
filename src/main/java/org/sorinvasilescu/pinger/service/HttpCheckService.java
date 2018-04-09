@@ -1,6 +1,7 @@
 package org.sorinvasilescu.pinger.service;
 
 import com.sun.jndi.toolkit.url.Uri;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -37,29 +38,28 @@ public class HttpCheckService extends Thread {
     }
 
     public void run() {
-        try {
-            HttpResponse response = httpRequest(url, timeout);
-            Integer code = response.getStatusLine().getStatusCode();
-            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            StringBuilder body = new StringBuilder();
-            String line = "";
-            while ((line = rd.readLine()) != null) {
-                body.append(line);
+        while (true) {
+            try {
+                HttpResponse response = httpRequest(url, timeout);
+                Integer code = response.getStatusLine().getStatusCode();
+                StringBuilder result = new StringBuilder();
+
+                for (Header header : response.getAllHeaders()) {
+                    result.append(header.toString());
+                }
+
+                Boolean success = isSuccessful(code, result.toString());
+                Results.getInstance().addHttpResult(host, result.toString(), success);
+                logger.warn(result);
+            } catch (Exception e) {
+                logger.error("Failed to send HTTP request to " + url + e);
             }
 
-            String result = body.toString();
-
-            Boolean success = isSuccessful(code, result);
-            Results.getInstance().addHttpResult(host, result, success);
-            logger.warn(result);
-        } catch (Exception e) {
-            logger.error("Failed to send HTTP request to " + url + e);
-        }
-
-        try {
-            sleep(delay*1000);
-        } catch (InterruptedException e) {
-            logger.error("Interrupted");
+            try {
+                sleep(delay * 1000);
+            } catch (InterruptedException e) {
+                logger.error("Interrupted");
+            }
         }
     }
 
