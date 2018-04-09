@@ -10,10 +10,7 @@ import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.sorinvasilescu.pinger.service.HttpCheckService;
-import org.sorinvasilescu.pinger.service.HttpResultService;
-import org.sorinvasilescu.pinger.service.PingService;
-import org.sorinvasilescu.pinger.service.TracerouteService;
+import org.sorinvasilescu.pinger.service.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -75,6 +72,12 @@ public class Main {
             addHttpCheckers(properties);
         }
 
+        // if there is a post URL
+        if (properties.containsKey("postURL")) {
+            HttpPostResultService postService = new HttpPostResultService(properties.getProperty("postURL"));
+            Results.getInstance().addObserver(postService);
+        }
+
         return true;
     }
 
@@ -113,8 +116,8 @@ public class Main {
     private static void addWebServer(Properties properties) {
         String host = properties.getProperty("host");
         Integer port = Integer.valueOf(properties.getProperty("port"));
-        HttpResultService httpResultService = new HttpResultService(host,port);
-        httpResultService.run();
+        HttpResultServer httpResultServer = new HttpResultServer(host,port);
+        httpResultServer.run();
     }
 
     private static void addPingAndTraceroute(Properties properties) {
@@ -164,7 +167,7 @@ public class Main {
                     Results.getInstance().addHostname(host);
                 }
                 HttpCheckService httpCheck = new HttpCheckService(url, delay, timeout);
-                httpCheck.run();
+                httpCheck.start();
             } catch (URISyntaxException e) {
                 logger.error("URI syntax exception: " + url);
             }

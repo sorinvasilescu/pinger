@@ -39,7 +39,7 @@ public class PingService extends Thread {
 
                 Boolean success = isSuccessful(process.exitValue(), result.toString());
 
-                Results.getInstance().addPingResult(name,result.toString(), success);
+                Results.getInstance().setPingResult(name,result.toString(), success);
                 logger.warn(result.toString());
             } catch (IOException e) {
                 logger.error("Could not execute command: ping " + name + "\nCause: " + e.getMessage());

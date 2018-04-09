@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sorinvasilescu.pinger.Results;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 
 public class HttpCheckService extends Thread {
@@ -49,7 +47,7 @@ public class HttpCheckService extends Thread {
                 }
 
                 Boolean success = isSuccessful(code, result.toString());
-                Results.getInstance().addHttpResult(host, result.toString(), success);
+                Results.getInstance().setHttpResult(host, result.toString(), success);
                 logger.warn(result);
             } catch (Exception e) {
                 logger.error("Failed to send HTTP request to " + url + e);

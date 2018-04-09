@@ -39,7 +39,7 @@ public class TracerouteService extends Thread {
 
                 Boolean success = isSuccessful(process.exitValue(), result.toString());
 
-                Results.getInstance().addTracerouteResult(name, result.toString(), success);
+                Results.getInstance().setTracerouteResult(name, result.toString(), success);
                 logger.warn(result.toString());
             } catch (IOException e) {
                 logger.error("Could not execute command: tracert " + name + "\nCause: " + e.getMessage());

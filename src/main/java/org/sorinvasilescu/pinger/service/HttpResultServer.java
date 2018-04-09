@@ -11,14 +11,14 @@ import org.sorinvasilescu.pinger.Result;
 import org.sorinvasilescu.pinger.ResultView;
 import org.sorinvasilescu.pinger.Results;
 
-public class HttpResultService extends Thread {
+public class HttpResultServer extends Thread {
 
     private String host;
     private Integer port;
 
     private static final Logger logger = LogManager.getLogger();
 
-    public HttpResultService(String host, Integer port) {
+    public HttpResultServer(String host, Integer port) {
         this.host = host;
         this.port = port;
     }
@@ -56,6 +56,11 @@ public class HttpResultService extends Thread {
                     Result traceResult = Results.getInstance().getTracerouteResult(host);
                     if (traceResult != null) {
                         result.setTrace(traceResult);
+                    }
+
+                    Result httpResult = Results.getInstance().getHttpResult(host);
+                    if (httpResult != null) {
+                        result.setTcp_ping(httpResult);
                     }
 
                     // send the result

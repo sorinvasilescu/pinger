@@ -2,8 +2,9 @@ package org.sorinvasilescu.pinger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
 
-public class Results {
+public class Results extends Observable {
 
     private final Map<String,Result> pingResults = new HashMap<>();
     private final Map<String,Result> tracerouteResults = new HashMap<>();
@@ -19,31 +20,34 @@ public class Results {
         return instance;
     }
 
-    public void addPingResult(String name, String result, Boolean success) {
+    public void setPingResult(String name, String result, Boolean success) {
         /* all keys are populated on startup, so we can synchronize on the actual result value, not the whole hashmap */
-        Result pingResult = pingResults.get(name);
-        synchronized (pingResult) {
-            pingResult.setResult(result);
-            pingResult.setSuccess(success);
+        synchronized (pingResults.get(name)) {
+            pingResults.get(name).setResult(result);
+            pingResults.get(name).setSuccess(success);
         }
+        this.setChanged();
+        this.notifyObservers(name);
     }
 
-    public void addTracerouteResult(String name, String result, Boolean success) {
+    public void setTracerouteResult(String name, String result, Boolean success) {
         /* all keys are populated on startup, so we can synchronize on the actual result value, not the whole hashmap */
-        Result traceRouteResult = tracerouteResults.get(name);
-        synchronized (traceRouteResult) {
-            traceRouteResult.setResult(result);
-            traceRouteResult.setSuccess(success);
+        synchronized (tracerouteResults.get(name)) {
+            tracerouteResults.get(name).setResult(result);
+            tracerouteResults.get(name).setSuccess(success);
         }
+        this.setChanged();
+        this.notifyObservers(name);
     }
 
-    public void addHttpResult(String name, String result, Boolean success) {
+    public void setHttpResult(String name, String result, Boolean success) {
         /* all keys are populated on startup, so we can synchronize on the actual result value, not the whole hashmap */
-        Result httpResult = httpResults.get(name);
-        synchronized (httpResult) {
-            httpResult.setResult(result);
-            httpResult.setSuccess(success);
+        synchronized (httpResults.get(name)) {
+            httpResults.get(name).setResult(result);
+            httpResults.get(name).setSuccess(success);
         }
+        this.setChanged();
+        this.notifyObservers(name);
     }
 
     public Result getPingResult(String name) {
