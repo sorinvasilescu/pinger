@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.sorinvasilescu.pinger.service.HttpCheckService;
 import org.sorinvasilescu.pinger.service.HttpResultService;
 import org.sorinvasilescu.pinger.service.PingService;
 import org.sorinvasilescu.pinger.service.TracerouteService;
@@ -17,6 +18,8 @@ import org.sorinvasilescu.pinger.service.TracerouteService;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 public class Main {
@@ -61,6 +64,15 @@ public class Main {
         // if there are hosts to be pinged
         if (properties.containsKey("pingAndTraceHosts")) {
             addPingAndTraceroute(properties);
+        }
+
+        // if there are urls to be checked via HTTP
+        if (
+                properties.containsKey("httpCheckUrls")
+                && properties.containsKey("httpDelays")
+                && properties.containsKey("httpTimeouts")
+            ) {
+            addHttpCheckers(properties);
         }
 
         return true;
@@ -119,6 +131,42 @@ public class Main {
                 // add traceroute service
                 TracerouteService tr = new TracerouteService(host);
                 tr.start();
+            }
+        }
+    }
+
+    private static void addHttpCheckers(Properties properties) {
+        String urls = properties.getProperty("httpCheckUrls");
+        String[] urlList = urls.split(",");
+
+        String delays = properties.getProperty("httpDelays");
+        String[] delayList = delays.split(",");
+
+        String timeouts = properties.getProperty("httpTimeouts");
+        String[] timeoutList = timeouts.split(",");
+
+        if ( !( (timeoutList.length == delayList.length) && (delayList.length == urlList.length) ) ) {
+            logger.error("URL list, timeout list and delay list must have the same length");
+            return;
+        }
+
+        for (int i=0; i<urlList.length; i++) {
+
+            String url = urlList[i];
+            Integer delay = Integer.valueOf(delayList[i]);
+            Integer timeout = Integer.valueOf(timeoutList[i]);
+
+            try {
+                URI uri = new URI(url);
+                String host = uri.getHost();
+                // check if results has the hostname already
+                if (!Results.getInstance().hasHostName(host)) {
+                    Results.getInstance().addHostname(host);
+                }
+                HttpCheckService httpCheck = new HttpCheckService(url, delay, timeout);
+                httpCheck.run();
+            } catch (URISyntaxException e) {
+                logger.error("URI syntax exception: " + url);
             }
         }
     }

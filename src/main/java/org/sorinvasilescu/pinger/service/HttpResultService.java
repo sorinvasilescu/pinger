@@ -37,7 +37,7 @@ public class HttpResultService extends Thread {
         public void handleRequest(HttpServerExchange exchange) {
             String path = exchange.getRequestPath();
             if (path.contains("results")) {
-                // path should be results/host where host was defined in properties
+                // path should be results/${host} where ${host} was defined in properties
                 String[] parts = path.split("results/");
                 if (parts.length > 1) {
                     String host = parts[1];
